@@ -6,88 +6,64 @@
 #include <iostream>
 #include <algorithm>
 #include <list>
+#include <string.h>
 using namespace std;
-
-#define element_it_type list<Data>::iterator
-
-struct Data{
-	int value;
-	list<element_it_type> iterators_I_cant_coexist;
-	Data(const int value_){
-		value = value_;
-	}
-};
 
 int main() {
 	// receive input
 	int subset_qty, div_value;
 	cin >> subset_qty >> div_value;
-	if (subset_qty == 1){
+	if (subset_qty == 1 || div_value == 1)
+	{
 		cout << "1" << endl;
 		return 0;
 	}
 
-	list<Data> subset;
-	//subset.(subset_qty);
-	for (int i = 0; i<subset_qty; ++i){
+	int * total_mod = new int[div_value];
+	memset(total_mod, 0, sizeof(int)*div_value);
+	for (int i = 0; i < subset_qty; ++i)
+	{
 		int value;
 		cin >> value;
-		subset.push_back(Data(value));
+		total_mod[value%div_value] += 1;
 	}
 
-	// analyze all dependencies
-	element_it_type one = subset.begin();
-	while (true){
-		element_it_type another = one;
-		++another;
-		while (another != subset.end()){
-			if ((one->value + another->value) % div_value == 0){
-				one->iterators_I_cant_coexist.push_back(another);
-				another->iterators_I_cant_coexist.push_back(one);
-			}
-			++another;
-		}
-		++one;
-		auto next = one;
-		++next;
-		if ((next) == subset.end()){
-			break;
-		}
+	// count non-divisible subset
+	int total = 0;
+	// case: mod = 0
+	if (total_mod[0] >= 1)
+	{
+		total += 1;
 	}
-
-	while (true){
-		element_it_type most_dependented = subset.begin();
+	// case: mod = 1,2,...,half-1
+	const int half_index = div_value / 2;
+	for (int i = 1; i < half_index; ++i)
+	{
+		int count = total_mod[i];
+		if (total_mod[i] < total_mod[div_value - i])
 		{
-			element_it_type it = subset.begin();
-			++it;
-			while (it != subset.end()){
-				if (it->iterators_I_cant_coexist.size() > most_dependented->iterators_I_cant_coexist.size()){
-					most_dependented = it;
-				}
-				++it;
-			}
+			count = total_mod[div_value - i];
 		}
-		const int qty_most_dependented = most_dependented->iterators_I_cant_coexist.size();
-		if (qty_most_dependented == 0){
-			cout << subset.size() << endl;
-			break;
-		}
-
-		element_it_type element_it = subset.begin();
-		while (element_it != subset.end()){
-			Data & element = *element_it;
-			auto dependented_it = element.iterators_I_cant_coexist.begin();
-			while (dependented_it != element.iterators_I_cant_coexist.end()){
-				if (*dependented_it == most_dependented){
-					element.iterators_I_cant_coexist.erase(dependented_it);
-					break;
-				}
-				++dependented_it;
-			}
-			++element_it;
-		}
-		subset.erase(most_dependented);
+		total += count;
 	}
+	// case: mod = half
+	if ((div_value % 2) == 0)
+	{
+		total += 1;
+	}
+	else
+	{
+		int count = total_mod[half_index];
+		if (total_mod[half_index] < total_mod[div_value - half_index])
+		{
+			count = total_mod[div_value - half_index];
+		}
+		total += count;
+	}
+
+	cout << total << endl;
+
+	delete [] total_mod;
 
 	return 0;
 }
